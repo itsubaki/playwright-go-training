@@ -3,6 +3,9 @@ package main_test
 import (
 	"fmt"
 	"log"
+	"net/url"
+	"os"
+	"path/filepath"
 
 	"github.com/playwright-community/playwright-go"
 )
@@ -89,4 +92,70 @@ func Example() {
 	// 28: Modules, not microservices
 	// 29: Frederic Tudor in 1806 brings cocktails and ice cream to the rest of the world
 	// 30: AT&T's predictions of the future (1993)
+}
+
+func Example_fileupload() {
+	pw, err := playwright.Run()
+	if err != nil {
+		log.Fatalf("could not start playwright: %v", err)
+	}
+	defer func() {
+		if err = pw.Stop(); err != nil {
+			log.Fatalf("could not stop Playwright: %v", err)
+		}
+	}()
+
+	browser, err := pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
+		Headless: playwright.Bool(false),
+	})
+	if err != nil {
+		log.Fatalf("could not launch browser: %v", err)
+	}
+	defer func() {
+		if err = browser.Close(); err != nil {
+			log.Fatalf("could not close browser: %v", err)
+		}
+	}()
+
+	page, err := browser.NewPage()
+	if err != nil {
+		log.Fatalf("could not create page: %v", err)
+	}
+
+	if _, err := page.Goto("https://google.com"); err != nil {
+		log.Fatalf("could not goto: %v", err)
+	}
+
+	if err := page.Click("img[alt='カメラ検索']"); err != nil {
+		log.Fatalf("could not click camera icon: %v", err)
+	}
+
+	filename := "kotowaza_neko_koban.png"
+	buf, err := os.ReadFile(filename)
+	if err != nil {
+		log.Fatalf("read file(%v): %v", filename, err)
+	}
+
+	if err := page.SetInputFiles("input[type='file']", []playwright.InputFile{
+		{
+			Name:     filepath.Base(filename),
+			MimeType: "image/png",
+			Buffer:   buf,
+		},
+	}); err != nil {
+		log.Fatalf("could not set input files: %v", err)
+	}
+	if _, err := page.WaitForSelector("div:is(:text(\"この画像を検索\"))"); err != nil {
+		log.Fatalf("wait for selector: %v", err)
+	}
+
+	pageURL := page.URL()
+	url, err := url.Parse(pageURL)
+	if err != nil {
+		log.Fatalf("parse %v: %v", pageURL, err)
+	}
+	fmt.Println(url.Host)
+
+	// Output:
+	// lens.google.com
 }
