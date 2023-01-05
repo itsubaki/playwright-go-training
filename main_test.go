@@ -156,6 +156,25 @@ func Example_fileupload() {
 	}
 	fmt.Println(url.Host)
 
+	entries, err := page.QuerySelectorAll("button")
+	if err != nil {
+		log.Fatalf("could not get entries: %v", err)
+	}
+
+	for _, e := range entries {
+		fmt.Println(e.InnerText())
+	}
+
 	// Output:
 	// lens.google.com
+	// アップロード <nil>
+	//  <nil>
+	// 自動検出 <nil>
+	// 日本語 <nil>
+	//  <nil>
+	// 検索 <nil>
+	// テキスト <nil>
+	// 翻訳 <nil>
+	// はい <nil>
+	// いいえ <nil>
 }
